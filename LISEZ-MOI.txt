@@ -1,0 +1,50 @@
+INSTALLATION DE L'APPLI "VISITE SECURITE TERRAIN"
+===================================================
+
+CONTENU DU DOSSIER
+-------------------
+index.html      -> l'application (formulaire, signatures, export PDF)
+manifest.json   -> permet l'installation sur l'écran d'accueil Android
+sw.js           -> service worker (fonctionnement hors-ligne)
+icon-192.png / icon-512.png -> icônes de l'application
+
+ETAPE 1 - HEBERGER LES FICHIERS (gratuit)
+------------------------------------------
+Un navigateur ne peut installer une PWA que si les fichiers sont servis en
+HTTPS (ouvrir index.html directement depuis le téléphone via "file://" ne
+permettra pas l'installation ni le mode hors-ligne, même si le formulaire
+fonctionnera).
+
+Options gratuites pour héberger ce dossier :
+  - GitHub Pages (compte GitHub gratuit) : déposer ce dossier dans un dépôt
+    et activer "Pages" dans les paramètres du dépôt.
+  - Netlify (offre gratuite) : glisser-déposer ce dossier sur app.netlify.com/drop
+  - Un espace web déjà existant dans votre entreprise, si vous en avez un.
+
+Une fois hébergé, vous obtenez une adresse du type :
+  https://votre-compte.github.io/visite-securite/
+
+ETAPE 2 - INSTALLER SUR LES TELEPHONES ANDROID
+-------------------------------------------------
+1. Ouvrir l'adresse ci-dessus dans Chrome sur le téléphone.
+2. Menu (3 points en haut à droite) > "Ajouter à l'écran d'accueil" (ou
+   Chrome propose automatiquement l'installation après quelques visites).
+3. L'application apparaît alors comme une icône normale, en plein écran,
+   sans barre d'adresse.
+
+ETAPE 3 - UTILISATION SUR LE TERRAIN
+---------------------------------------
+- Le formulaire s'enregistre automatiquement en brouillon sur le téléphone
+  au fur et à mesure de la saisie (pas besoin de réseau).
+- Les deux signatures sont obligatoires avant envoi.
+- Le bouton "Générer le PDF et l'envoyer" ouvre le partage natif Android :
+  choisir l'appli mail (Outlook, Gmail...), le PDF est déjà en pièce jointe.
+- Le bouton "Nouvelle visite" en haut efface le brouillon en cours pour
+  repartir sur une grille vierge.
+
+REMARQUE
+--------
+Les intitulés des points de contrôle (dossier administratif, risque
+routier, chute de plain-pied, risque électrique) sont codés en dur dans
+index.html, dans le tableau SECTIONS en haut du script. Toute modification
+de la trame se fait à cet endroit.

@@ -1,0 +1,15 @@
+{
+  "name": "Visite sécurité terrain",
+  "short_name": "Visite sécurité",
+  "description": "Grille de visite sécurité terrain — études de réseau et détection de réseaux souterrains",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F6F8",
+  "theme_color": "#CE1459",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
