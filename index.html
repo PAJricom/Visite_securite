@@ -1,3 +1,9 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Visite sécurité terrain — RiCOM</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#CE1459">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,7 +61,7 @@
   .progress-fill{height:100%;background:#7FB8A3;width:0%;transition:width .25s ease;}
   .progress-label{font-size:11px;color:#F3C9DA;margin-top:6px;display:flex;justify-content:space-between;}
 
-  .nav-chips{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 4px;background:var(--paper);position:sticky;top:66px;z-index:19;}
+  .nav-chips{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 4px;background:var(--paper);position:sticky;top:var(--topbar-h, 90px);z-index:19;}
   .chip{
     flex:0 0 auto;font-size:12px;padding:6px 11px;border-radius:999px;
     background:var(--card);border:1px solid var(--line);color:var(--ink-soft);
@@ -135,7 +141,7 @@
   .sticky-cta{
     position:fixed;left:0;right:0;bottom:0;z-index:30;
     background:linear-gradient(180deg,rgba(245,246,248,0),var(--paper) 22%);
-    padding:14px 14px 16px;
+    padding:14px 14px calc(16px + env(safe-area-inset-bottom));
   }
   .sticky-cta-inner{max-width:640px;margin:0 auto;}
   .cta-btn{
@@ -154,6 +160,8 @@
   }
   .toast.show{opacity:1;transform:translateY(0);}
 </style>
+</head>
+<body>
 
 <div class="app">
   <div class="brand-strip">
@@ -422,6 +430,13 @@
 
   buildSections();
   updateProgress();
+
+  function syncTopbarHeight(){
+    const topbar = document.querySelector('.topbar');
+    if(topbar) document.documentElement.style.setProperty('--topbar-h', topbar.offsetHeight + 'px');
+  }
+  syncTopbarHeight();
+  window.addEventListener('resize', syncTopbarHeight);
 
   // --- Chapitre 5 : points de contrôle personnalisés ---
   let customItems = []; // [{id, label}]
@@ -850,3 +865,5 @@
 
 })();
 </script>
+</body>
+</html>
