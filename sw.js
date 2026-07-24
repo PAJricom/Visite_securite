@@ -1,4 +1,4 @@
-const CACHE_NAME = 'visite-securite-v1';
+const CACHE_NAME = 'visite-securite-v2';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
