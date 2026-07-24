@@ -130,9 +130,15 @@
   .photo-tile .cap-row{display:flex;align-items:center;gap:4px;padding:6px;}
   .photo-tile input{flex:1;font-size:11.5px;padding:5px 6px;border-radius:6px;border:1px solid var(--line);font-family:inherit;}
   .photo-tile .rm{flex:0 0 auto;background:none;border:none;color:var(--bad);font-size:16px;line-height:1;padding:2px 4px;}
+  .photo-add-row{display:flex;gap:8px;}
   .photo-add-btn{
-    display:block;text-align:center;padding:11px;border-radius:10px;
-    border:1.5px dashed var(--navy);color:var(--navy);font-size:13px;font-weight:600;
+    flex:1;text-align:center;padding:11px 6px;border-radius:10px;
+    border:1.5px dashed var(--navy);color:var(--navy);font-size:12.5px;font-weight:600;
+    background:#fff;
+  }
+  .visually-hidden-input{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0,0,0,0);white-space:nowrap;border:0;
   }
 
   .sign-pad{
@@ -262,8 +268,12 @@
   <section class="card" id="photos-card">
     <h2><span class="num">•</span>Photos du site (annexe)</h2>
     <div class="photo-grid" id="photoGrid"></div>
-    <label class="photo-add-btn" for="photoInput">+ Ajouter une photo</label>
-    <input type="file" id="photoInput" accept="image/*" capture="environment" multiple style="display:none;">
+    <div class="photo-add-row">
+      <button type="button" class="photo-add-btn" id="photoCameraBtn">📷 Prendre une photo</button>
+      <button type="button" class="photo-add-btn" id="photoGalleryBtn">🖼️ Choisir dans la galerie</button>
+    </div>
+    <input type="file" id="photoInputCamera" accept="image/*" capture="environment" class="visually-hidden-input">
+    <input type="file" id="photoInputGallery" accept="image/*" multiple class="visually-hidden-input">
     <div class="footer-space"></div>
   </section>
 </div>
@@ -611,8 +621,15 @@
     });
   }
 
-  document.getElementById('photoInput').addEventListener('change', async (e) => {
-    const files = Array.from(e.target.files || []);
+  document.getElementById('photoCameraBtn').addEventListener('click', () => {
+    document.getElementById('photoInputCamera').click();
+  });
+  document.getElementById('photoGalleryBtn').addEventListener('click', () => {
+    document.getElementById('photoInputGallery').click();
+  });
+
+  async function handlePhotoFiles(fileList){
+    const files = Array.from(fileList || []);
     for(const file of files){
       try{
         const dataUrl = await compressImage(file);
@@ -621,6 +638,14 @@
     }
     renderPhotos();
     queueSaveDraft();
+  }
+
+  document.getElementById('photoInputCamera').addEventListener('change', (e) => {
+    handlePhotoFiles(e.target.files);
+    e.target.value = '';
+  });
+  document.getElementById('photoInputGallery').addEventListener('change', (e) => {
+    handlePhotoFiles(e.target.files);
     e.target.value = '';
   });
 
