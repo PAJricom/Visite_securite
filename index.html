@@ -124,6 +124,17 @@
   }
   .empty-note{font-size:12.5px;color:var(--ink-soft);font-style:italic;padding:4px 0 8px;}
 
+  .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .photo-tile{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#FCFCFD;}
+  .photo-tile img{width:100%;height:110px;object-fit:cover;display:block;}
+  .photo-tile .cap-row{display:flex;align-items:center;gap:4px;padding:6px;}
+  .photo-tile input{flex:1;font-size:11.5px;padding:5px 6px;border-radius:6px;border:1px solid var(--line);font-family:inherit;}
+  .photo-tile .rm{flex:0 0 auto;background:none;border:none;color:var(--bad);font-size:16px;line-height:1;padding:2px 4px;}
+  .photo-add-btn{
+    display:block;text-align:center;padding:11px;border-radius:10px;
+    border:1.5px dashed var(--navy);color:var(--navy);font-size:13px;font-weight:600;
+  }
+
   .sign-pad{
     border:1.5px dashed var(--line);border-radius:10px;background:#FCFCFD;
     touch-action:none;width:100%;height:130px;display:block;
@@ -245,6 +256,14 @@
         <button class="clear-btn" onclick="clearSignature('auditeur')">Effacer</button>
       </div>
     </div>
+    <div class="footer-space"></div>
+  </section>
+
+  <section class="card" id="photos-card">
+    <h2><span class="num">•</span>Photos du site (annexe)</h2>
+    <div class="photo-grid" id="photoGrid"></div>
+    <label class="photo-add-btn" for="photoInput">+ Ajouter une photo</label>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" multiple style="display:none;">
     <div class="footer-space"></div>
   </section>
 </div>
@@ -528,6 +547,83 @@
 
   renderCustomItems();
 
+  // --- Photos annexées ---
+  let photos = []; // [{id, dataUrl, caption}]
+  let photoSeq = 0;
+  const MAX_PHOTO_DIM = 1000;
+  const PHOTO_QUALITY = 0.62;
+
+  function renderPhotos(){
+    const grid = document.getElementById('photoGrid');
+    grid.innerHTML = '';
+    photos.forEach(p => {
+      const tile = document.createElement('div');
+      tile.className = 'photo-tile';
+
+      const img = document.createElement('img');
+      img.src = p.dataUrl;
+      tile.appendChild(img);
+
+      const capRow = document.createElement('div');
+      capRow.className = 'cap-row';
+      const capInput = document.createElement('input');
+      capInput.type = 'text';
+      capInput.placeholder = 'Légende (facultatif)';
+      capInput.value = p.caption || '';
+      capInput.addEventListener('input', (e) => { p.caption = e.target.value; queueSaveDraft(); });
+      capRow.appendChild(capInput);
+
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'rm';
+      rm.textContent = '✕';
+      rm.addEventListener('click', () => {
+        photos = photos.filter(x => x.id !== p.id);
+        renderPhotos();
+        queueSaveDraft();
+      });
+      capRow.appendChild(rm);
+
+      tile.appendChild(capRow);
+      grid.appendChild(tile);
+    });
+  }
+
+  function compressImage(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          let { width, height } = img;
+          if(width > height && width > MAX_PHOTO_DIM){ height = Math.round(height * MAX_PHOTO_DIM / width); width = MAX_PHOTO_DIM; }
+          else if(height > MAX_PHOTO_DIM){ width = Math.round(width * MAX_PHOTO_DIM / height); height = MAX_PHOTO_DIM; }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', PHOTO_QUALITY));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('photoInput').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    for(const file of files){
+      try{
+        const dataUrl = await compressImage(file);
+        photos.push({ id: 'photo_' + (photoSeq++), dataUrl, caption:'' });
+      }catch(err){ console.error(err); }
+    }
+    renderPhotos();
+    queueSaveDraft();
+    e.target.value = '';
+  });
+
   const FIELD_IDS = ['f_date','f_site','f_operateur','f_auditeur','f_commande','f_dict','f_nature','f_gestionnaire','f_pointsforts','f_ecarts'];
   FIELD_IDS.forEach(id => {
     const el = document.getElementById(id);
@@ -611,6 +707,7 @@
       responses: state.responses,
       observations: state.observations,
       customItems: customItems,
+      photos: photos,
       signatures: {
         operateur: signatures.operateur.hasInk() ? signatures.operateur.dataUrl() : null,
         auditeur: signatures.auditeur.hasInk() ? signatures.auditeur.dataUrl() : null,
@@ -646,6 +743,13 @@
       if(!isNaN(num) && num >= customSeq) customSeq = num + 1;
       addCustomItem(entry.label, entry.id);
     });
+
+    photos = payload.photos || [];
+    photos.forEach(p => {
+      const num = parseInt(String(p.id).replace('photo_',''), 10);
+      if(!isNaN(num) && num >= photoSeq) photoSeq = num + 1;
+    });
+    renderPhotos();
 
     Object.entries(payload.fields || {}).forEach(([id, val]) => {
       const el = document.getElementById(id);
@@ -690,6 +794,8 @@
     customItems = [];
     recomputeTotalItems();
     renderCustomItems();
+    photos = [];
+    renderPhotos();
     signatures.operateur.clear();
     signatures.auditeur.clear();
     await storageAdapter.delete(DRAFT_KEY);
@@ -831,6 +937,37 @@
       doc.text("Signature de l'auditeur", 40 + sigW + 30, y);
       doc.addImage(signatures.operateur.dataUrl(), 'PNG', 40, y+6, sigW, sigH);
       doc.addImage(signatures.auditeur.dataUrl(), 'PNG', 40 + sigW + 30, y+6, sigW, sigH);
+
+      if(photos.length > 0){
+        doc.addPage();
+        y = 40;
+        doc.setFontSize(12); doc.setTextColor(...navy); doc.setFont(undefined,'bold');
+        doc.text('Annexe — Photos du site', 40, y);
+        y += 20;
+
+        const boxW = pageWidth - 80;
+        const boxH = 260;
+        for(let i = 0; i < photos.length; i++){
+          if(y + boxH > 780){ doc.addPage(); y = 40; }
+          const p = photos[i];
+          const dims = await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve({ w: img.width, h: img.height });
+            img.src = p.dataUrl;
+          });
+          let drawW = boxW, drawH = dims.h * (boxW / dims.w);
+          if(drawH > boxH){ drawH = boxH; drawW = dims.w * (boxH / dims.h); }
+          const xOff = 40 + (boxW - drawW) / 2;
+          doc.addImage(p.dataUrl, 'JPEG', xOff, y, drawW, drawH);
+          y += drawH + 6;
+          if(p.caption){
+            doc.setFontSize(9); doc.setTextColor(90,90,90); doc.setFont(undefined,'italic');
+            doc.text(p.caption, pageWidth/2, y, {align:'center', maxWidth: boxW});
+            y += 14;
+          }
+          y += 16;
+        }
+      }
 
       const siteName = (document.getElementById('f_site').value || 'site').replace(/[^a-z0-9]+/gi,'_');
       const dateVal = document.getElementById('f_date').value || new Date().toISOString().slice(0,10);
